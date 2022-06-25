@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dbConfig = require("./app/config/db.config");
+const bcrypt = require('bcryptjs')
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const db = require("./app/models");
 const Role = db.role;
+const User = db.user;
 
 db.mongoose
   .connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
@@ -73,13 +75,32 @@ function initial() {
 
       new Role({
         name: "admin"
-      }).save(err => {
+      }).save(async err => {
         if (err) {
           console.log("error", err);
         }
 
         console.log("added 'admin' to roles collection");
+      
+        const roleId = await Role.findOne({
+          name: "admin"
+        })
+        console.log(roleId);
+        new User({
+          username : "admin",
+          password: bcrypt.hashSync("Test123", 8),
+          roles: [ 
+            roleId._id
+          ] 
+        }).save(err => {
+          if(err) {
+            console.log("error",err);
+          }
+        })
+        
       });
+      
     }
   });
+  
 }
